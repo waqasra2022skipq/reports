@@ -1,5 +1,6 @@
-#!/usr/bin/perl
-use lib '/home/okmis/mis/src/lib';
+#!"C:\Strawberry\perl\bin\perl.exe"
+use lib '/wamp64_updated/www/src/lib';
+
 use DBI;
 use myForm;
 use myDBI;
@@ -193,9 +194,9 @@ while (my $rrecord = $srecord->fetchrow_hashref)
 }
 print qq|\t${rcount}|."\t" x $numFLDS.qq|${total}\n|;
 
-$Data_Completeness_Numerator = $PFMET + $DNEXCEPTION + $PFNOTMET;
+my $Data_Completeness_Numerator = $PFMET + $DNEXCEPTION + $PFNOTMET;
 
-print qq|Numerator = ${Data_Completeness_Numerator}\t DENOMINATOR= ${rcount}|;
+print qq|Numerator = ${Data_Completeness_Numerator}\t DENOMINATOR= ${rcount} \n|;
 
 $srecord->finish();
 $sExclude->finish();

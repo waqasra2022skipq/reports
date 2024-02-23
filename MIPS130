@@ -1,5 +1,6 @@
-#!/usr/bin/perl
-use lib '/wamp64/www/src/lib';
+#!"C:\Strawberry\perl\bin\perl.exe"
+use lib '/wamp64_updated/www/src/lib';
+
 use DBI;
 use myForm;
 use myDBI;
@@ -35,7 +36,7 @@ $withSelection .= qq| and Client.Active=1| if ( $form->{Active} );
   $DESC = qq|Percentage of visits for patients aged 18 years and older for which the MIPS eligible professional or MIPS eligible clinician attests to documenting a list of current medications using all immediate resources available on the date of the encounter. This list must include ALL known prescriptions, over-the-counters, herbals, and vitamin/mineral/dietary (nutritional) supplements AND must contain the medications name, dosage, frequency and route of administration|;
   $INST = qq|This measure is to be submitted at each denominator eligible visit during the 12 month performance period. Merit-based Incentive Payment System (MIPS) eligible clinicians meet the intent of this measure by making their best effort to document a current, complete and accurate medication list during each encounter. There is no diagnosis associated with this measure. This measure may be submitted by MIPS eligible clinicians who perform the quality actions described in the measure based on the services provided and the measure-specific denominator coding.|;
   my @FLDS = ('ClinicName:ClinicName','LName:LastName','FName:FirstName','ClientID:ClientID','DOB:DateOfBirth','Age:Age','Race:Race','pcount:ProbAddr','PrimaryProvider:PrimaryProvider');
-  my $numFLDS = scalar(@FLDS)-2;
+  my $numFLDS = scalar(@FLDS)-3;
 print qq|numFLDS=${numFLDS}\n| if ( $debug );
   my $qrecord = qq|
 select Treatment.TrID,Treatment.ContLogDate,Treatment.ClinicID,xSC.SCNum
@@ -82,31 +83,18 @@ select Treatment.TrID,Treatment.ContLogDate,Treatment.ClinicID,xSC.SCNum
         or xSC.SCNum='92542'
         or xSC.SCNum='92544'
         or xSC.SCNum='92545'
-        or xSC.SCNum='92547'
         or xSC.SCNum='92548'
         or xSC.SCNum='92550'
         or xSC.SCNum='92557'
         or xSC.SCNum='92567'
         or xSC.SCNum='92568'
         or xSC.SCNum='92570'
-        or xSC.SCNum='92585'
         or xSC.SCNum='92588'
         or xSC.SCNum='92626'
         or xSC.SCNum='96116'
-        or xSC.SCNum='96121'
-        or xSC.SCNum='96130'
-        or xSC.SCNum='96131'
-        or xSC.SCNum='96132'
-        or xSC.SCNum='96133'
-        or xSC.SCNum='96136'
-        or xSC.SCNum='96137'
-        or xSC.SCNum='96138'
-        or xSC.SCNum='96139'
-        or xSC.SCNum='96146'
-        or xSC.SCNum='96150'
-        or xSC.SCNum='96151'
-        or xSC.SCNum='96152'
-        or xSC.SCNum LIKE '97127%'
+        or xSC.SCNum='96156'
+        or xSC.SCNum='96158'
+        or xSC.SCNum='97129'
         or xSC.SCNum='97161'
         or xSC.SCNum='97162'
         or xSC.SCNum='97163'
@@ -121,7 +109,6 @@ select Treatment.TrID,Treatment.ContLogDate,Treatment.ClinicID,xSC.SCNum
         or xSC.SCNum='98960'
         or xSC.SCNum='98961'
         or xSC.SCNum='98962'
-        or xSC.SCNum='99201'
         or xSC.SCNum='99202'
         or xSC.SCNum='99203'
         or xSC.SCNum='99204'
@@ -134,6 +121,7 @@ select Treatment.TrID,Treatment.ContLogDate,Treatment.ClinicID,xSC.SCNum
         or xSC.SCNum='99222'
         or xSC.SCNum='99223'
         or xSC.SCNum='99236'
+
         or xSC.SCNum='99304'
         or xSC.SCNum='99305'
         or xSC.SCNum='99306'
@@ -143,21 +131,8 @@ select Treatment.TrID,Treatment.ContLogDate,Treatment.ClinicID,xSC.SCNum
         or xSC.SCNum='99310'
         or xSC.SCNum='99315'
         or xSC.SCNum='99316'
-        or xSC.SCNum='99318'
-        or xSC.SCNum='99324'
-        or xSC.SCNum='99325'
-        or xSC.SCNum='99326'
-        or xSC.SCNum='99327'
-        or xSC.SCNum='99328'
-        or xSC.SCNum='99334'
-        or xSC.SCNum='99335'
-        or xSC.SCNum='99336'
-        or xSC.SCNum='99337'
-        or xSC.SCNum='99339'
-        or xSC.SCNum='99340'
         or xSC.SCNum='99341'
         or xSC.SCNum='99342'
-        or xSC.SCNum='99343'
         or xSC.SCNum='99344'
         or xSC.SCNum='99345'
         or xSC.SCNum='99347'
@@ -177,20 +152,22 @@ select Treatment.TrID,Treatment.ContLogDate,Treatment.ClinicID,xSC.SCNum
         or xSC.SCNum LIKE '99395%'
         or xSC.SCNum LIKE '99396%'
         or xSC.SCNum LIKE '99397%'
+        or xSC.SCNum='99424'
+        or xSC.SCNum='99491'
         or xSC.SCNum='G0101'
         or xSC.SCNum='G0108'
         or xSC.SCNum='G0270'
         or xSC.SCNum='G0402'
         or xSC.SCNum='G0438'
         or xSC.SCNum='G0439'
-        or xSC.SCNum='G0515'
        )
   ${withSelection}
  group by Client.LName,Client.FName,Client.ClientID
 |;
 # group by Client.LName,Client.FName,Client.ClientID,xSC.SCNum,misICD10.ICD10
 #warn qq|qrecord=\n${qrecord}\n|;
-my ($rcount,$total) = (0,0);
+my ($rcount,$total, $PFMET, $DNEXCEPTION, $PFNOTMET) = (0,0,0,0,0);
+
 print qq|${DT}\n${QID} ${TITLE} ${DateRange} ${Header}\n|;
 foreach my $f ( @FLDS ) { my ($fld,$hdr) = split(':',$f); print qq|${hdr}\t|; }
 print qq|\n|;
@@ -200,14 +177,33 @@ $srecord->execute();
 while (my $rrecord = $srecord->fetchrow_hashref)
 { 
   $sGCode->execute($rrecord->{'ClientID'});
-  next if (my $rGCode = $sGCode->fetchrow_hashref);
+  while (my $rGCode = $sGCode->fetchrow_hashref) {
+    if ($rGCode->{SCNum} == 'G8427') {
+      # Performance MET
+      $PFMET++;
+
+    } elsif ($rGCode->{SCNum} == 'G8430') {
+      # DENOMINATOR EXCEPTION
+      $PDNEXCEPTIONFMET++;
+
+    } elsif ($rGCode->{SCNum} == 'G8428') {
+      # Performance NOT MET
+      $PFNOTMET++;
+    }
+  }
 #  if (my $rGCode = $sGCode->fetchrow_hashref) { warn qq|FOUND: $rrecord->{'ClientID'}\n|; }
   $rcount++;
   foreach my $f ( @FLDS ) { my ($fld,$hdr) = split(':',$f); print qq|$rrecord->{$fld}\t|; }
   print qq|\n|;
   $total += $rrecord->{'pcount'};
 }
-print qq|${rcount}|."\t" x $numFLDS.qq|${total}\n|;
+
+print qq|\t${rcount}|."\t" x $numFLDS.qq|${total}\n|;
+
+my $Data_Completeness_Numerator = $PFMET + $DNEXCEPTION + $PFNOTMET;
+
+print qq|Numerator = ${Data_Completeness_Numerator}\t DENOMINATOR= ${rcount} \n|;
+
 $srecord->finish();
 $sGCode->finish();
 
