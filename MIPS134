@@ -1,0 +1,193 @@
+#!/usr/bin/perl
+use lib '/wamp64/www/src/lib';
+use DBI;
+use myForm;
+use myDBI;
+use DBA;
+use DBUtil;
+use Time::Local;
+my $DT = localtime();
+############################################################################
+# usage:
+#   MIPS134
+############################################################################
+my $form = myForm->new();
+my $dbh = myDBI->dbconnect($form->{'DBNAME'});
+my $debug = $form->{'LOGINPROVID'} == 91 ? 0 : 0;
+if ( $debug ) { foreach my $f ( sort keys %{$form} ) { print "form-$f=$form->{$f}\n"; } }
+$form = DBUtil->setDates($form);
+my $DateRange = qq|from $form->{FromDateD} thru $form->{ToDateD}|;
+
+my $multidel = chr(253);
+my $ForProvID = $form->{ForProvID} ? $form->{ForProvID} : $form->{LOGINPROVID};
+# join xInsurance needed for withSelection
+my $withSelection = DBA->withSelection($form,'and','Client.clinicClinicID','Treatment.ProvID','Treatment.ClientID','Treatment.TrID');
+my $Header = DBA->withSelectionHeader($form);
+print qq|Header: ${Header}\n| if ( $debug );
+$withSelection .= qq| and Client.Active=1| if ( $form->{Active} );
+  $QID = qq|QID134|;
+  $TITLE = qq|Preventive Care and Screening: Screening for Depression and Follow-Up Plan - National Quality Strategy Domain: Community/Population Health - Meaningful Measure Area: Prevention, Treatment, and Management of Mental Health|;
+  $CTYPE = qq|MIPS CLINICAL QUALITY MEASURES (CQMS)|;
+  $MTYPE = qq|Process|;
+  $DESC = qq|Percentage of patients aged 12 years and older screened for depression on the date of the encounter using an age appropriate standardized depression screening tool AND if positive, a follow-up plan is documented on the date of the positive screen|;
+  $INST = qq|This measure is to be submitted a minimum of once per measurement period for patients seen during the measurement period. The most recent quality-data code submitted will be used for performance calculation. This measure may be submitted by Merit-based Incentive Payment System (MIPS) eligible clinicians who perform the quality actions described in the measure based on the services provided and the measure-specific denominator coding. The follow-up plan must be related to a positive depression screening, example: "Patient referred for psychiatric evaluation due to positive depression screening".|;
+  my @FLDS = ('ClinicName:ClinicName','LName:LastName','FName:FirstName','ClientID:ClientID','DOB:DateOfBirth','Age:Age','Race:Race','pcount:ProbAddr','PrimaryProvider:PrimaryProvider');
+  my $numFLDS = scalar(@FLDS)-2;
+print qq|numFLDS=${numFLDS}\n| if ( $debug );
+  my $qrecord = qq|
+select Treatment.TrID, Treatment.POS, Treatment.ContLogDate,xSC.SCNum
+      ,Client.LName,Client.FName,Client.ClientID
+      ,Clinic.Name as ClinicName
+      ,CONCAT(Counselor.LName,', ',Counselor.FName) as PrimaryProvider
+      ,Client.DOB,TIMESTAMPDIFF(YEAR, Client.DOB, CURDATE()) AS Age
+      ,xRaces.Descr as Race
+      ,misICD10.ICD10
+      ,count(*) as pcount
+ from Treatment 
+  left join Client on Client.ClientID=Treatment.ClientID
+  left join Provider as Clinic on Clinic.ProvID=Client.clinicClinicID
+  left join Provider as Counselor on Counselor.ProvID=Client.ProvID
+  left join okmis_config.xRaces on xRaces.ID=SUBSTRING_INDEX(Client.Race,'${multidel}',1)
+  left join xSC on xSC.SCID=Treatment.SCID
+  left join xInsurance on xInsurance.ID=xSC.InsID
+  left join ClientNoteProblems on ClientNoteProblems.TrID=Treatment.TrID
+  left join okmis_config.misICD10 on misICD10.ID=ClientNoteProblems.UUID
+ where (Treatment.ContLogDate >= '$form->{FromDate}' and Treatment.ContLogDate<='$form->{ToDate}')
+   and (TIMESTAMPDIFF(YEAR, Client.DOB, Treatment.ContLogDate) > 12)
+   and (xSC.SCNum='59400'
+        or xSC.SCNum='59510'
+        or xSC.SCNum='59610'
+        or xSC.SCNum='59618'
+        or xSC.SCNum='90791'
+        or xSC.SCNum='90792'
+        or xSC.SCNum='90832'
+        or xSC.SCNum='90834'
+        or xSC.SCNum='90837'
+        or xSC.SCNum='92625'
+        or xSC.SCNum='96116'
+        or xSC.SCNum='96125'
+        or xSC.SCNum='96136'
+        or xSC.SCNum='96138'
+        or xSC.SCNum='96156'
+        or xSC.SCNum='96158'
+        or xSC.SCNum='96161'
+        or xSC.SCNum='96162'
+        or xSC.SCNum='96163'
+        or xSC.SCNum='96164'
+        or xSC.SCNum='97165'
+        or xSC.SCNum='97166'
+        or xSC.SCNum='98966'
+        or xSC.SCNum='98968'
+        or xSC.SCNum='98968'
+        or xSC.SCNum='99078'
+        or xSC.SCNum='99202'
+        or xSC.SCNum='99203'
+        or xSC.SCNum='99204'
+        or xSC.SCNum='99205'
+        or xSC.SCNum='99212'
+        or xSC.SCNum='99213'
+        or xSC.SCNum='99214'
+        or xSC.SCNum='99215'
+        or xSC.SCNum='99304'
+        or xSC.SCNum='99305'
+        or xSC.SCNum='99306'
+        or xSC.SCNum='99307'
+        or xSC.SCNum='99308'
+        or xSC.SCNum='99309'
+        or xSC.SCNum='99310'
+        or xSC.SCNum='99315'
+        or xSC.SCNum='99316'
+        or xSC.SCNum='99341'
+        or xSC.SCNum='99342'
+        or xSC.SCNum='99344'
+        or xSC.SCNum='99345'
+        or xSC.SCNum='99347'
+        or xSC.SCNum='99348'
+        or xSC.SCNum='99349'
+        or xSC.SCNum='99350'
+
+        or xSC.SCNum LIKE '99384%'
+        or xSC.SCNum LIKE '99385%'
+        or xSC.SCNum LIKE '99386%'
+        or xSC.SCNum LIKE '99387%'
+        or xSC.SCNum LIKE '99394%'
+        or xSC.SCNum LIKE '99395%'
+        or xSC.SCNum LIKE '99396%'
+        or xSC.SCNum LIKE '99397%'
+
+        or xSC.SCNum LIKE '99401%'
+        or xSC.SCNum LIKE '99402%'
+        or xSC.SCNum LIKE '99403%'
+
+        or xSC.SCNum='99424'
+        or xSC.SCNum='99441'
+        or xSC.SCNum='99442'
+        or xSC.SCNum='99443'
+        or xSC.SCNum='99483'
+        or xSC.SCNum='99483'
+        or xSC.SCNum='99483'
+        or xSC.SCNum='99483'
+        or xSC.SCNum='99491'
+        or xSC.SCNum='99492'
+        or xSC.SCNum='99493'
+        or xSC.SCNum='99494'
+        
+        or xSC.SCNum='G0101'
+        or xSC.SCNum='G0402'
+        or xSC.SCNum='G0438'
+        or xSC.SCNum='G0439'
+        or xSC.SCNum='G0444'
+       )
+  ${withSelection}
+#   and Client.ClientID=55011
+ group by Client.LName,Client.FName,Client.ClientID
+|;
+# group by Client.LName,Client.FName,Client.ClientID,xSC.SCNum,misICD10.ICD10
+# KLS
+print qq|qrecord=\n${qrecord}\n| if ( $debug );
+my $sExclude = $dbh->prepare("
+select Treatment.TrID
+ from Treatment 
+  left join xSC on xSC.SCID=Treatment.SCID 
+ where Treatment.ClientID=? and xSC.SCNum='G9717'
+");
+my $sGCode = $dbh->prepare("select TrID from Treatment left join xSC on xSC.SCID=Treatment.SCID where Treatment.ClientID=? and xSC.SCNum IN ('G8431','G8432','G8433','G8510','G8511')");
+my ($rcount,$total) = (0,0);
+print qq|${DT}\n${QID} ${TITLE} ${DateRange} ${Header}\n|;
+foreach my $f ( @FLDS ) { my ($fld,$hdr) = split(':',$f); print qq|${hdr}\t|; }
+print qq|\n|;
+my $srecord = $dbh->prepare($qrecord);
+$srecord->execute();
+while (my $rrecord = $srecord->fetchrow_hashref)
+{ 
+#  AND NOT DENOMINATOR EXCLUSION
+
+  my $POS = DBA->getxref($form,'xPOS',$rrecord->{'POS'},'Descr');
+
+  # In xpos table(okmis_config), SCID=4, which is home....So if patient has recieved treatment at home then bail
+  next if ($POS == 4);
+
+  $sExclude->execute($rrecord->{'ClientID'});
+  my $rExclude = $sExclude->fetchrow_hashref;
+  my $cnt = $sExclude->rows;
+print qq|Exclude cnt=${cnt}\n| if ( $debug );
+  next if ( $cnt );
+
+#  Numerator
+  $sGCode->execute($rrecord->{'ClientID'});
+  next if (my $rGCode = $sGCode->fetchrow_hashref);
+
+  $rcount++;
+  foreach my $f ( @FLDS ) { my ($fld,$hdr) = split(':',$f); print qq|$rrecord->{$fld}\t|; }
+  print qq|$rClientAUDIT->{'q2'}\t$rClientSBIRT->{'q2'}\t|;
+  print qq|\n|;
+  $total += $rrecord->{'pcount'};
+}
+print qq|${rcount}|."\t" x $numFLDS.qq|${total}\n|;
+$srecord->finish();
+$sExclude->finish();
+$sGCode->finish();
+
+myDBI->cleanup();
+exit;
+############################################################################
