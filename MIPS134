@@ -1,5 +1,5 @@
-#!/usr/bin/perl
-use lib '/wamp64/www/src/lib';
+#!"C:\Strawberry\perl\bin\perl.exe"
+use lib '/wamp64_updated/www/src/lib';
 use DBI;
 use myForm;
 use myDBI;
@@ -32,10 +32,10 @@ $withSelection .= qq| and Client.Active=1| if ( $form->{Active} );
   $DESC = qq|Percentage of patients aged 12 years and older screened for depression on the date of the encounter using an age appropriate standardized depression screening tool AND if positive, a follow-up plan is documented on the date of the positive screen|;
   $INST = qq|This measure is to be submitted a minimum of once per measurement period for patients seen during the measurement period. The most recent quality-data code submitted will be used for performance calculation. This measure may be submitted by Merit-based Incentive Payment System (MIPS) eligible clinicians who perform the quality actions described in the measure based on the services provided and the measure-specific denominator coding. The follow-up plan must be related to a positive depression screening, example: "Patient referred for psychiatric evaluation due to positive depression screening".|;
   my @FLDS = ('ClinicName:ClinicName','LName:LastName','FName:FirstName','ClientID:ClientID','DOB:DateOfBirth','Age:Age','Race:Race','pcount:ProbAddr','PrimaryProvider:PrimaryProvider');
-  my $numFLDS = scalar(@FLDS)-2;
+  my $numFLDS = scalar(@FLDS)-3;
 print qq|numFLDS=${numFLDS}\n| if ( $debug );
   my $qrecord = qq|
-select Treatment.TrID, Treatment.POS, Treatment.ContLogDate,xSC.SCNum
+select Treatment.TrID, Treatment.ContLogDate,xSC.SCNum
       ,Client.LName,Client.FName,Client.ClientID
       ,Clinic.Name as ClinicName
       ,CONCAT(Counselor.LName,', ',Counselor.FName) as PrimaryProvider
@@ -160,20 +160,15 @@ my $srecord = $dbh->prepare($qrecord);
 $srecord->execute();
 while (my $rrecord = $srecord->fetchrow_hashref)
 { 
-#  AND NOT DENOMINATOR EXCLUSION
-
-  my $POS = DBA->getxref($form,'xPOS',$rrecord->{'POS'},'Descr');
-
-  # In xpos table(okmis_config), SCID=4, which is home....So if patient has recieved treatment at home then bail
-  next if ($POS == 4);
+  #  AND NOT DENOMINATOR EXCLUSION
 
   $sExclude->execute($rrecord->{'ClientID'});
   my $rExclude = $sExclude->fetchrow_hashref;
   my $cnt = $sExclude->rows;
-print qq|Exclude cnt=${cnt}\n| if ( $debug );
+  print qq|Exclude cnt=${cnt}\n| if ( $debug );
   next if ( $cnt );
 
-#  Numerator
+  #  Numerator
   $sGCode->execute($rrecord->{'ClientID'});
   next if (my $rGCode = $sGCode->fetchrow_hashref);
 
@@ -183,7 +178,7 @@ print qq|Exclude cnt=${cnt}\n| if ( $debug );
   print qq|\n|;
   $total += $rrecord->{'pcount'};
 }
-print qq|${rcount}|."\t" x $numFLDS.qq|${total}\n|;
+print qq|\t${rcount}|."\t" x $numFLDS.qq|${total}\n|;
 $srecord->finish();
 $sExclude->finish();
 $sGCode->finish();
