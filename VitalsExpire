@@ -1,5 +1,5 @@
-#!/usr/bin/perl
-use lib '/wamp64/www/src/lib';
+#!"C:\Strawberry\perl\bin\perl.exe"
+use lib '/wamp64_updated/www/src/lib';
 use DBI;
 use DBForm;
 use DBA;
@@ -24,7 +24,7 @@ $ClinicSelection .= qq| and Client.Active=1| if ( $form->{Active} );
 my $sProvider = $dbh->prepare("select LName, FName from Provider where ProvID=?");
 my $sClientVitalSigns = $dbh->prepare("select * from ClientVitalSigns where ClientID=? order by VDate");
 my $sClient = $dbh->prepare("
-select Client.LName, Client.FName, Client.ClientID, Client.DOB, Client.ProvID, Client.Active
+select Client.LName, Client.FName, Client.ClientID, Client.DOB, Client.ProvID, Client.Active, Client.RecDOLC as LastContDate
       ,ClientVitalSigns.ID, ClientVitalSigns.VDate
       ,ClientVitalSigns.HeightFeet, ClientVitalSigns.HeightInches, ClientVitalSigns.Weight
       ,ClientVitalSigns.BMI, ClientVitalSigns.HbA1c
@@ -38,7 +38,7 @@ select Client.LName, Client.FName, Client.ClientID, Client.DOB, Client.ProvID, C
 ##my $records = main->getLastLineOfReport($form,$sel,"ClientID");
 ##foreach $ClientID ( keys %{ $records } )
 print qq|${DT}\nMissing BMI Report.\nClients with Height/Weight missing from Vital Signs screening report.\n|;
-print qq|Client Name\tActive\tDOB\tAge\tTestDate\tHeight\tWeight\tBMI\tHbA1c\tProvider Name\tMessage\n|;
+print qq|Client Name\tActive\tDOB\tAge\tTestDate\tHeight\tWeight\tBMI\tHbA1c\tProvider Name\tMessage\tLast Contact Date\n|;
 #print qq|ClinicSelection=${ClinicSelection}\n|;
 #print qq|with=${with}\n|;
 $sClient->execute();
@@ -46,7 +46,8 @@ while (my $rClient = $sClient->fetchrow_hashref)
 { 
 #foreach my $f ( sort keys %{$rClient} ) { print "rClient-$f=$rClient->{$f}\n"; }
   my $ClientID = $rClient->{'ClientID'};
-  my $ActiveFlag = $rClient->{'Active'} ? 'Yes' : 'No';;
+  my $ActiveFlag = $rClient->{'Active'} ? 'Yes' : 'No';
+  my $LastContDate = $rClient->{'LastContDate'};
   my $ClientName = qq|$rClient->{'LName'}, $rClient->{'FName'} ($rClient->{'ClientID'})|;
   my $Age = DBUtil->Date($rClient->{DOB}, 'age');
   $sProvider->execute($rClient->{ProvID});
@@ -59,7 +60,7 @@ while (my $rClient = $sClient->fetchrow_hashref)
     my $Height = qq|$rClient->{'HeightFeet'}ft $rClient->{'HeightInches'}in| 
                if ( $rClient->{'HeightFeet'} ne '' || $rClient->{'HeightInches'} ne '' );
     my $Weight = qq|$rClient->{'Weight'}lbs| if ( $rClient->{'Weight'} ne '' );
-    print qq|${ClientName}\t${ActiveFlag}\t$rClient->{'DOB'}\t${Age}\t$rClient->{'VDate'}\t${Height}\t${Weight}\t$rClient->{'BMI'}\t$rClient->{'HbA1c'}\t${ProvName}\t${msg}\n|;
+    print qq|${ClientName}\t${ActiveFlag}\t$rClient->{'DOB'}\t${Age}\t$rClient->{'VDate'}\t${Height}\t${Weight}\t$rClient->{'BMI'}\t$rClient->{'HbA1c'}\t${ProvName}\t${msg}\t${LastContDate}\n|;
   }
   elsif ( $Age < 18 )
   {
@@ -67,7 +68,7 @@ while (my $rClient = $sClient->fetchrow_hashref)
     my $LastHeight = qq|$r->{'HeightFeet'}ft $r->{'HeightInches'}in| 
                    if ( $r->{'HeightFeet'} ne '' || $r->{'HeightInches'} ne '' );
     my $LastWeight = qq|$r->{'Weight'}lbs| if ( $r->{'Weight'} ne '' );
-    print qq|${ClientName}\t${ActiveFlag}\t$rClient->{'DOB'}\t${Age}\t$r->{'VDate'}\t${LastHeight}\t${LastWeight}\t$r->{'BMI'}\t$r->{'HbA1c'}\t${ProvName}\t${msg}\n| if ( $msg ne '' );
+    print qq|${ClientName}\t${ActiveFlag}\t$rClient->{'DOB'}\t${Age}\t$r->{'VDate'}\t${LastHeight}\t${LastWeight}\t$r->{'BMI'}\t$r->{'HbA1c'}\t${ProvName}\t${msg}\t${LastContDate}\n| if ( $msg ne '' );
   }
   elsif ( $Age > 17 )
   {
@@ -75,7 +76,7 @@ while (my $rClient = $sClient->fetchrow_hashref)
     my $LastHeight = qq|$r->{'HeightFeet'}ft $r->{'HeightInches'}in| 
                    if ( $r->{'HeightFeet'} ne '' || $r->{'HeightInches'} ne '' );
     my $LastWeight = qq|$r->{'Weight'}lbs| if ( $r->{'Weight'} ne '' );
-    print qq|${ClientName}\t${ActiveFlag}\t$rClient->{'DOB'}\t${Age}\t$r->{'VDate'}\t${LastHeight}\t${LastWeight}\t$r->{'BMI'}\t$r->{'HbA1c'}\t${ProvName}\t${msg}\n| if ( $msg ne '' );
+    print qq|${ClientName}\t${ActiveFlag}\t$rClient->{'DOB'}\t${Age}\t$r->{'VDate'}\t${LastHeight}\t${LastWeight}\t$r->{'BMI'}\t$r->{'HbA1c'}\t${ProvName}\t${msg}\t${LastContDate}\n| if ( $msg ne '' );
   }
 }
 

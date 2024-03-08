@@ -1,5 +1,6 @@
-#!/usr/bin/perl
-use lib '/wamp64/www/src/lib';
+#!"C:\Strawberry\perl\bin\perl.exe"
+use lib '/wamp64_updated/www/src/lib';
+
 use DBI;
 use myForm;
 use myDBI;
@@ -22,7 +23,7 @@ my $Header = DBA->withSelectionHeader($form);
 $ClinicSelection .= qq| and Client.Active=1| if ( $form->{Active} );
 my $sProvider = $dbh->prepare("select LName, FName from Provider where ProvID=?");
 my $qClient = qq"
-select Client.LName, Client.FName, Client.ClientID, Client.DOB, Client.ProvID, Client.Active
+select Client.LName, Client.FName, Client.ClientID, Client.DOB, Client.ProvID, Client.RecDOLC as LastContDate, Client.Active
       ,ClientPrAuth.PAnumber, ClientPrAuth.EffDate, ClientPrAuth.ExpDate, ClientPrAuthCDC.TransType
       ,ClientPHQ.TestDate as TestPHQ
       ,ClientPHQ4.TestDate as TestPHQ4
@@ -66,12 +67,13 @@ select Client.LName, Client.FName, Client.ClientID, Client.DOB, Client.ProvID, C
 #warn qq|qClient=\n${qClient}\n|;
 my $sClient = $dbh->prepare($qClient);
 print qq|${DT}\n${Header}Missing PHQ Report.\nClients with missing any PHQ Test report\n|;
-print qq|Client Name\tClientID\tActive\tDOB\tAge\tPA Number\tTransType\tProvider Name\tMessage\n|;
+print qq|Client Name\tClientID\tActive\tDOB\tAge\tPA Number\tTransType\tProvider Name\tMessage\tLast Contact Date\n|;
 $sClient->execute();
 while (my $rClient = $sClient->fetchrow_hashref)
 { 
   my $ClientID = $rClient->{'ClientID'};
-  my $ActiveFlag = $rClient->{'Active'} ? 'Yes' : 'No';;
+  my $ActiveFlag = $rClient->{'Active'} ? 'Yes' : 'No';
+  my $LastContDate = $rClient->{'LastContDate'};
   my $ClientName = qq|$rClient->{'LName'}, $rClient->{'FName'}|;
   my $Age = DBUtil->Date($rClient->{DOB}, 'age');
 ## in select  next unless ( $rClient->{'TestPHQ'} eq '' && $rClient->{'TestPHQ4'} eq '' && $rClient->{'TestPHQ9'} eq '' && $rClient->{'TestTPHQ9'} eq '' && $rClient->{'TestPHQ15'} eq '' && $rClient->{'TestPHQBrief'} eq '' && $rClient->{'TestPHQSADS'} eq '' );
@@ -82,7 +84,7 @@ while (my $rClient = $sClient->fetchrow_hashref)
   $sProvider->execute($rClient->{ProvID});
   my ($ProvLName, $ProvFName) = $sProvider->fetchrow_array;
   my $ProvName = qq|$ProvLName, $ProvFName ($rClient->{ProvID})|; 
-  print qq|${ClientName}\t${ClientID}\t${ActiveFlag}\t$rClient->{'DOB'}\t${Age}\t$rClient->{'PAnumber'}\t$rClient->{'TransType'}\t${ProvName}\t${msg}\n|;
+  print qq|${ClientName}\t${ClientID}\t${ActiveFlag}\t$rClient->{'DOB'}\t${Age}\t$rClient->{'PAnumber'}\t$rClient->{'TransType'}\t${ProvName}\t${msg}\t${LastContDate}\n|;
 #  print qq|Dates:\t$rClient->{'TestPHQ'}\t$rClient->{'TestPHQ4'}\t$rClient->{'TestPHQ9'}\t$rClient->{'TestTPHQ9'}\t$rClient->{'TestPHQ15'}\t$rClient->{'TestPHQBrief'}\t$rClient->{'TestPHQSADS'}\n|;
 }
 

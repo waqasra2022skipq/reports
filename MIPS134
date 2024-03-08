@@ -153,10 +153,16 @@ select Treatment.TrID
  where Treatment.ClientID=? and xSC.SCNum='G9717'
 ");
 my $sGCode = $dbh->prepare("select TrID from Treatment left join xSC on xSC.SCID=Treatment.SCID where Treatment.ClientID=? and xSC.SCNum IN ('G8431','G8432','G8433','G8510','G8511')");
-my ($rcount,$total, $PFMET, $DNEXCEPTION, $PFNOTMET) = (0,0,0,0,0);
-print qq|${DT}\n${QID} ${TITLE} ${DateRange} ${Header}\n|;
-foreach my $f ( @FLDS ) { my ($fld,$hdr) = split(':',$f); print qq|${hdr}\t|; }
-print qq|\n|;
+my ($Denominator,$total, $PFMET, $DNEXCEPTION, $PFNOTMET) = (0,0,0,0,0);
+
+my $table_header = '';
+foreach my $f ( @FLDS ) { 
+  my ($fld,$hdr) = split(':',$f); 
+  $table_header .= qq|${hdr}\t|; 
+}
+$table_header .= qq|\n|;
+$table_entries = '';
+
 my $srecord = $dbh->prepare($qrecord);
 $srecord->execute();
 while (my $rrecord = $srecord->fetchrow_hashref)
@@ -178,7 +184,7 @@ while (my $rrecord = $srecord->fetchrow_hashref)
 
     } elsif ($rGCode->{SCNum} == 'G8510') {
       # DENOMINATOR EXCEPTION
-      $PDNEXCEPTIONFMET++;
+      $DNEXCEPTION++;
 
     } elsif ($rGCode->{SCNum} == 'G8432' || $rGCode->{SCNum} == 'G8511') {
       # Performance NOT MET
@@ -186,17 +192,53 @@ while (my $rrecord = $srecord->fetchrow_hashref)
     }
   }
 
-  $rcount++;
-  foreach my $f ( @FLDS ) { my ($fld,$hdr) = split(':',$f); print qq|$rrecord->{$fld}\t|; }
-  print qq|$rClientAUDIT->{'q2'}\t$rClientSBIRT->{'q2'}\t|;
-  print qq|\n|;
+  $Denominator++;
+  foreach my $f ( @FLDS ) { 
+    my ($fld,$hdr) = split(':',$f); 
+    $table_entries .= qq|$rrecord->{$fld}\t|; 
+  }
+  # print qq|$rClientAUDIT->{'q2'}\t$rClientSBIRT->{'q2'}\t|;
+  $table_entries .= qq|\n|; 
+
   $total += $rrecord->{'pcount'};
 }
-print qq|\t${rcount}|."\t" x $numFLDS.qq|${total}\n|;
+
+my $Data_Completeness_Rate;
+my $Performance_Rate;
 
 my $Data_Completeness_Numerator = $PFMET + $DNEXCEPTION + $PFNOTMET;
 
-print qq|Numerator = ${Data_Completeness_Numerator}\t DENOMINATOR= ${rcount} \n|;
+if($Denominator eq 0) {
+
+  $Data_Completeness_Rate = 0;
+  $Performance_Rate = 0;
+
+} else {
+
+  $Data_Completeness_Rate = ($Data_Completeness_Numerator/ $Denominator) * 100;
+  $Performance_Rate = ($PFMET / ($Data_Completeness_Numerator - $DNEXCEPTION)) * 100;
+}
+
+$Data_Completeness_Rate = sprintf("%.2f", $Data_Completeness_Rate);
+$Performance_Rate = sprintf("%.2f", $Performance_Rate);
+
+
+
+my $nom_denom = qq|Numerator = Performance Met (${PFMET}) +  Denominator Exception (${DNEXCEPTION}) +  Performance Not Met (${PFNOTMET}) = ${Data_Completeness_Numerator} \n Denominator(Eligible Population) = ${Denominator}\n|;
+my $Data_Completeness_Rate_Text = qq|Data Completeness Rate = Numerator(${Data_Completeness_Numerator}) / Denominator(${Denominator}) = ${Data_Completeness_Rate}% \n|;
+my $Performance_Rate_Text = qq|Performance Rate = Performance Met (${PFMET}) / Numerator(${Data_Completeness_Numerator}) - Denominator Exception (${DNEXCEPTION}) = ${Performance_Rate}% \n|;
+
+$Header = qq|${DT}\n${QID} ${TITLE} ${DateRange} ${Header} \n ${nom_denom}|;
+
+print $Header;
+print $Data_Completeness_Rate_Text;
+print $Performance_Rate_Text;
+print $table_header;
+print $table_entries;
+
+print qq|\t${Denominator}|."\t" x $numFLDS.qq|${total}\n|;
+
+
 
 $srecord->finish();
 $sExclude->finish();

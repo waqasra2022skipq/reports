@@ -1,5 +1,5 @@
-#!/usr/bin/perl
-use lib '/wamp64/www/src/lib';
+#!"C:\Strawberry\perl\bin\perl.exe"
+use lib '/wamp64_updated/www/src/lib';
 use DBI;
 use DBForm;
 use DBA;
@@ -46,7 +46,7 @@ select ClientVitalSigns.ClientID
  order by ClientVitalSigns.VDate desc
 ");
 my $qClient = qq"
-select Client.LName, Client.FName, Client.ClientID, Client.DOB, Client.ProvID, Client.Active, count(*) as Count
+select Client.LName, Client.FName, Client.ClientID, Client.DOB, Client.ProvID, Client.Active, Client.RecDOLC as LastContDate, count(*) as Count
       ,ClientVitalSigns.ID
  from Client 
    left join ClientACL on ClientACL.ClientID=Client.ClientID
@@ -60,12 +60,13 @@ select Client.LName, Client.FName, Client.ClientID, Client.DOB, Client.ProvID, C
 #warn qq|qClient=\n${qClient}\n|;
 my $sClient = $dbh->prepare($qClient);
 print qq|${DT}\n${Header}Patients that have a BMI>30 but do not have an HbA1c (since ${YEARAGOFMT}) report.\n|;
-print qq|Client Name\tActive\tDOB\tAge\tProvider Name\tTestDate\tHeight\tWeight\tBMI\tMessage\n|;
+print qq|Client Name\tActive\tDOB\tAge\tProvider Name\tTestDate\tHeight\tWeight\tBMI\tMessage\tLast Contact Date\n|;
 $sClient->execute();
 while (my $rClient = $sClient->fetchrow_hashref)
 { 
   my $ClientID = $rClient->{'ClientID'};
-  my $ActiveFlag = $rClient->{'Active'} ? 'Yes' : 'No';;
+  my $ActiveFlag = $rClient->{'Active'} ? 'Yes' : 'No';
+  my $LastContDate = $rClient->{'LastContDate'};
   my $ClientName = qq|$rClient->{'LName'}, $rClient->{'FName'} ($rClient->{'ClientID'})|;
   my $Age = DBUtil->Date($rClient->{DOB}, 'age');
   $sProvider->execute($rClient->{ProvID});
@@ -74,7 +75,7 @@ while (my $rClient = $sClient->fetchrow_hashref)
   if ( $rClient->{ID} eq '' )       # should not go here because BMI>30 selection
   {
     my $msg = 'NO CLIENT VITAL SIGNS ENTERED';
-    print qq|${ClientName}\t${ActiveFlag}\t$rClient->{'DOB'}\t${Age}\t${ProvName}\t\t\t\t\t${msg}\n|;
+    print qq|${ClientName}\t${ActiveFlag}\t$rClient->{'DOB'}\t${Age}\t${ProvName}\t\t\t\t\t${msg}\t${LastContDate}\n|;
   }
   else
   {
@@ -89,7 +90,7 @@ while (my $rClient = $sClient->fetchrow_hashref)
       {
 #print qq|2: ID=$rTest2->{'ID'}\n|;
         my $msg = qq|BMI>30 and NO HbA1c|;
-        print qq|${ClientName}\t${ActiveFlag}\t$rClient->{'DOB'}\t${Age}\t${ProvName}\t$rTest1->{'TestDate'}\t${Height}\t$rTest1->{'Weight'}\t$rTest1->{'BMI'}\t${msg}\n|;
+        print qq|${ClientName}\t${ActiveFlag}\t$rClient->{'DOB'}\t${Age}\t${ProvName}\t$rTest1->{'TestDate'}\t${Height}\t$rTest1->{'Weight'}\t$rTest1->{'BMI'}\t${msg}\t${LastContDate}\n|;
       }
     }
   }
