@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-use lib '/wamp64/www/src/lib';
+use lib '/wamp64_updated/www/src/lib';
 use DBI;
 use myForm;
 use myDBI;
@@ -148,7 +148,7 @@ select Treatment.TrID,Treatment.ContLogDate,Treatment.ClinicID, Treatment.POS, x
  group by Client.LName,Client.FName,Client.ClientID
 |;
 
-my $sGCode = $dbh->prepare("select TrID 
+my $sGCode = $dbh->prepare("select Treatment.TrID, xSC.SCNum
  from Treatment left join xSC on xSC.SCID=Treatment.SCID 
  where Treatment.ClientID=? 
 	 and (Treatment.ContLogDate >= '$form->{FromDate}' and Treatment.ContLogDate<='$form->{ToDate}')

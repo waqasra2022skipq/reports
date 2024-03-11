@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-use lib '/wamp64/www/src/lib';
+use lib '/wamp64_updated/www/src/lib';
 use CGI qw(:standard escape);
 use Cwd;
 use DBI;
@@ -84,7 +84,7 @@ my $sHours = $dbh->prepare($qHours);
 ############################################################################
 # this is the pdf template we need
 #   it is the first 3 objects with 2 font objects and the content object
-my $pdtpath = '/wamp64/www/src/pdf/CARS.pdt';
+my $pdtpath = '/wamp64_updated/www/src/pdf/CARS.pdt';
 my $pdf = PDF->start($pdtpath);
 if ( $form->{Client_ClientID} )
 {

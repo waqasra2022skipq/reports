@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-use lib '/wamp64/www/src/lib';
+use lib '/wamp64_updated/www/src/lib';
 use Cwd;
 use DBI;
 use DBForm;
@@ -13,6 +13,7 @@ use XML::LibXML;
 binmode STDOUT, ":utf8";
 my $debug = 1;
 
+die("HERE");
 ############################################################################
 my $form = DBForm->new();
 my $dbh = $form->dbconnect();

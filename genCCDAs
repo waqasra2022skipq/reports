@@ -1,6 +1,6 @@
 
 #!/usr/bin/perl
-use lib '/wamp64/www/src/lib';
+use lib '/wamp64_updated/www/src/lib';
 use Cwd;
 use DBI;
 use myForm;
@@ -35,7 +35,7 @@ sub report
   my ($self,$form) = @_;
 #$pwd=cwd();
 #warn qq|genCCDAs: pwd=${pwd}\n|;
-  my $cmd = qq|/wamp64/www/src/cgi/bin/GenReport.cgi Name=GenerateCCDAs\&daterange=2yago\&InsID=100\&ClinicIDs=2501\&ProvIDs=2502\&DBNAME=$form->{DBNAME}\&mlt=$form->{mlt}|;
+  my $cmd = qq|/wamp64_updated/www/src/cgi/bin/GenReport.cgi Name=GenerateCCDAs\&daterange=2yago\&InsID=100\&ClinicIDs=2501\&ProvIDs=2502\&DBNAME=$form->{DBNAME}\&mlt=$form->{mlt}|;
   my $html = `${cmd}`;
   my $html =  myHTML->close(1);
   return($html);

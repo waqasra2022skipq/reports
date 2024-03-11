@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-use lib '/wamp64/www/src/lib';
+use lib '/wamp64_updated/www/src/lib';
 use DBI;
 use DBA;
 use myForm;
@@ -106,7 +106,7 @@ if ( $form->{output} eq 'pdf' )
   $qTreatment = $select . $where . " and Treatment.ClinicID=? and ${Table}.ProvID=? " . main->addSort($form);
   $sTreatment = $dbh->prepare($qTreatment);
 warn qq|qTreatment=\n$qTreatment\n| if ( $debug );
-  $pdf = PDF->start("/wamp64/www/src/pdf/NoteRpt.pdt");
+  $pdf = PDF->start("/wamp64_updated/www/src/pdf/NoteRpt.pdt");
   $qPC = $select . $where . " group by ${Table}.ProvID,Treatment.ClinicID " . main->addSort($form);
   $sPC = $dbh->prepare($qPC);
   $sPC->execute() || $form->dberror($qPC);
@@ -126,7 +126,7 @@ warn qq|addSelection=\n$addSelection\n| if ( $debug );
 warn qq|qTreatment=\n$qTreatment\n| if ( $debug );
 if ( $form->{LOGINPROVID} == 91 )
 {
-  open OUT, ">/wamp64/www/src/debug/NoteRpt.out" or die "Couldn't open file: $!";
+  open OUT, ">/wamp64_updated/www/src/debug/NoteRpt.out" or die "Couldn't open file: $!";
   foreach my $f ( sort keys %{$form} ) { print OUT ": form-$f=$form->{$f}\n"; }
   print OUT qq|qTreatment=\n$qTreatment\n|;
   close(OUT);

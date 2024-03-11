@@ -175,7 +175,8 @@ $table_header .= qq|\n|;
 $table_entries = '';
 
 
-my $sGCode = $dbh->prepare("select TrID from Treatment left join xSC on xSC.SCID=Treatment.SCID where Treatment.ClientID=? and xSC.SCNum IN ('G8427','G8428','G8430')");
+my $sGCode = $dbh->prepare("select Treatment.TrID, xSC.SCNum from Treatment left join xSC on xSC.SCID=Treatment.SCID where Treatment.ClientID=? and xSC.SCNum IN ('G8427','G8428','G8430')");
+
 my $srecord = $dbh->prepare($qrecord);
 $srecord->execute();
 while (my $rrecord = $srecord->fetchrow_hashref)
@@ -188,7 +189,7 @@ while (my $rrecord = $srecord->fetchrow_hashref)
 
     } elsif ($rGCode->{SCNum} == 'G8430') {
       # DENOMINATOR EXCEPTION
-      $PDNEXCEPTIONFMET++;
+      $DNEXCEPTION++;
 
     } elsif ($rGCode->{SCNum} == 'G8428') {
       # Performance NOT MET

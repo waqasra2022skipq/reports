@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-use lib '/wamp64/www/src/lib';
+use lib '/wamp64_updated/www/src/lib';
 use CGI qw(:standard escape);
 use Cwd;
 use DBI;
@@ -12,7 +12,7 @@ use Time::Local;
 my $form = DBForm->new();
 $form = DBUtil->setDates($form);
 my $DateRange = qq|from $form->{FromDateD} thru $form->{ToDateD}|;
-open DBG, ">/wamp64/www/src/debug/genTrPlan.out" or die "Couldn't open file: $!";
+open DBG, ">/wamp64_updated/www/src/debug/genTrPlan.out" or die "Couldn't open file: $!";
 foreach my $f ( sort keys %{$form} ) { print DBG ": form-$f=$form->{$f}\n"; }
 ############################################################################
 my $dbh = $form->dbconnect();
@@ -30,7 +30,7 @@ my $sClinic = $dbh->prepare('select * from Provider where ProvID=?');
 ############################################################################
 # this is the pdf template we need
 #   it is the first 3 objects with 2 font objects and the content object
-$pdtpath = '/wamp64/www/src/pdf/TrPlan.pdt';
+$pdtpath = '/wamp64_updated/www/src/pdf/TrPlan.pdt';
 if ( $form->{IDs} )
 {
   $pdf = PDF->start($pdtpath);

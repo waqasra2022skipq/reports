@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ############################################################################
-use lib '/wamp64/www/src/lib';
+use lib '/wamp64_updated/www/src/lib';
 use Cwd;
 use DBI;
 use DBA;
@@ -948,7 +948,7 @@ sub prtpdf
   my $Text = &PDF::genFDF($PDFPath,$form);
 if ( $form->{LOGINPROVID} == 91 )
 {
-  open OUT, ">/wamp64/www/src/debug/Stats.out" or die "Couldn't open file: $!";
+  open OUT, ">/wamp64_updated/www/src/debug/Stats.out" or die "Couldn't open file: $!";
   print OUT qq|${Text}|;
   close(OUT);
 }
