@@ -2,8 +2,7 @@
 use lib '/wamp64_updated/www/src/lib';
 
 use CGI::Carp qw(warningsToBrowser); 
-use CGI::Carp qw(warningsToBrowser fatalsToBrowser); 
-
+use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 use Cwd;
 use DBI;
 use myForm;
@@ -58,8 +57,8 @@ sub submit
   my $cnt = 0;
   foreach my $ProvID ( split(chr(253),$form->{ProvIDs}) )
   {
-      my $xml = qq|<?xml version="1.0" encoding="utf-8"?>\n|.gQRDAIIIXML->setXML($form,$ProvID,'','',$form->{FromDate},$form->{ToDate}, $form->{'MEASUREID'});
-      my $xmlfile = qq|/tmp/XML_${Token}_${ProvID}_${ClientID}.xml|;
+      my $xml = qq|<?xml version="1.0" encoding="utf-8"?>\n|.gQRDAIIIXML->setXML($form,$ProvID,'',$form->{FromDate},$form->{ToDate}, $form->{'MEASUREID'});
+      my $xmlfile = qq|/tmp/XML_${Token}_${ProvID}.xml|;
       my $xmlpath = qq|$form->{DOCROOT}${xmlfile}|;
       open(XML, ">", $xmlpath) || die "Couldn't open '${xmlpath}' file: $!"; 
       print XML $xml;
@@ -67,8 +66,8 @@ sub submit
 
       # next the generate QRDA file...
       # IF you want to VIEw the QRDA change the suffix to '.htm'!!
-      my $visitout = gXML->styleQRDA($form,$xmlfile);
-      my $visitfile = qq|/tmp/QRDAIII_${Token}_${ProvID}_${ClientID}.xml|;
+      my $visitout = gQRDAIIIXML->styleQRDA($form,$xmlfile);
+      my $visitfile = qq|/tmp/QRDAIII_${Token}_${ProvID}.xml|;
       my $visitpath = qq|$form->{DOCROOT}${visitfile}|;
       open(OUT, ">:encoding(UTF-8)", $visitpath) || die "Couldn't open '${visitpath}' file: $!"; 
       print OUT $visitout;
